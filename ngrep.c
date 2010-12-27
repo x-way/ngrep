@@ -214,6 +214,8 @@ int main(int argc, char **argv) {
                     dump_func = &dump_formatted;
                 else if (!strcasecmp(optarg, "byline"))
                     dump_func = &dump_byline;
+                else if (!strcasecmp(optarg, "httphead"))
+                    dump_func = &dump_httphead;
                 else if (!strcasecmp(optarg, "none"))
                     dump_func = &dump_unwrapped;
                 else if (!strcasecmp(optarg, "single")) {
@@ -996,6 +998,41 @@ int8_t blank_match_func(unsigned char *data, uint32_t len, uint16_t *mindex, uin
     return 1;
 }
 
+void dump_httphead(unsigned char *data, uint32_t len, uint16_t mindex, uint16_t msize) {
+    if (len > 0) {
+        const unsigned char *s      = data;
+        const unsigned char *s2     = data;
+        uint8_t should_hilite       = (msize && enable_hilite);
+        unsigned char *hilite_start = data + mindex;
+        unsigned char *hilite_end   = hilite_start + msize;
+	unsigned char in_http_head  = 0;
+
+	for ( ; !in_http_head && s2 < data + len ; s2++ ) {
+		if ( *s2 == '\n' )
+			break;
+
+		if ( *s2 == 'H' && *(s2+1) == 'T' && *(s2+2) == 'T' && *(s2+3) == 'P' )
+			in_http_head = 1;
+	}
+
+        while ( in_http_head && s < data + len) {
+	    if ( *s == '\n' && *(s+1) == '\r' )
+		    in_http_head = 0;
+
+            if (should_hilite && s == hilite_start)
+                printf(ANSI_hilite);
+
+            printf("%c", (*s == '\n' || isprint(*s)) ? *s : nonprint_char);
+            s++;
+
+            if (should_hilite && s == hilite_end)
+                printf(ANSI_off);
+        }
+
+        printf("\n");
+    }
+}
+
 void dump_byline(unsigned char *data, uint32_t len, uint16_t mindex, uint16_t msize) {
     if (len > 0) {
         const unsigned char *s      = data;
@@ -1337,7 +1374,7 @@ void usage(int8_t e) {
            "L"
 #endif
            "hNXViwqpevxlDtTRM> <-IO pcap_dump> <-n num> <-d dev> <-A num>\n"
-           "             <-s snaplen> <-S limitlen> <-W normal|byline|single|none> <-c cols>\n"
+           "             <-s snaplen> <-S limitlen> <-W normal|byline|httphead|single|none> <-c cols>\n"
            "             <-P char> <-F file> <match expression> <bpf filter>\n"
            "   -h  is help/usage\n"
            "   -V  is version information\n"
@@ -1362,7 +1399,7 @@ void usage(int8_t e) {
            "   -A  is dump num packets after a match\n"
            "   -s  is set the bpf caplen\n"
            "   -S  is set the limitlen on matched packets\n"
-           "   -W  is set the dump format (normal, byline, single, none)\n"
+           "   -W  is set the dump format (normal, httphead, byline, single, none)\n"
            "   -c  is force the column width to the specified size\n"
            "   -P  is set the non-printable display char to what is specified\n"
            "   -F  is read the bpf filter from the specified file\n"

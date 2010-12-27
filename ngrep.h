@@ -89,6 +89,7 @@ void dump_packet(struct pcap_pkthdr *, u_char *, uint8_t, unsigned char *, uint3
 void dump_unwrapped(unsigned char *, uint32_t, uint16_t, uint16_t);
 void dump_formatted(unsigned char *, uint32_t, uint16_t, uint16_t);
 void dump_byline   (unsigned char *, uint32_t, uint16_t, uint16_t);
+void dump_httphead (unsigned char *, uint32_t, uint16_t, uint16_t);
 
 void dump_delay_proc_init(struct pcap_pkthdr *);
 void dump_delay_proc     (struct pcap_pkthdr *);
