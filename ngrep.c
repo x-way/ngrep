@@ -1005,14 +1005,17 @@ void dump_httphead(unsigned char *data, uint32_t len, uint16_t mindex, uint16_t 
         uint8_t should_hilite       = (msize && enable_hilite);
         unsigned char *hilite_start = data + mindex;
         unsigned char *hilite_end   = hilite_start + msize;
+	unsigned char found_http_head  = 0;
 	unsigned char in_http_head  = 0;
 
 	for ( ; !in_http_head && s2 < data + len ; s2++ ) {
 		if ( *s2 == '\n' )
 			break;
 
-		if ( *s2 == 'H' && *(s2+1) == 'T' && *(s2+2) == 'T' && *(s2+3) == 'P' )
+		if ( *s2 == 'H' && *(s2+1) == 'T' && *(s2+2) == 'T' && *(s2+3) == 'P' ) {
+			found_http_head = 1;
 			in_http_head = 1;
+		}
 	}
 
         while ( in_http_head && s < data + len) {
@@ -1028,6 +1031,12 @@ void dump_httphead(unsigned char *data, uint32_t len, uint16_t mindex, uint16_t 
             if (should_hilite && s == hilite_end)
                 printf(ANSI_off);
         }
+	if ( found_http_head && !in_http_head )
+		s += 2;
+
+	if ( s < data + len ) {
+		printf("(%d bytes payload omitted)\n", (data+len-s));
+	}
 
         printf("\n");
     }
